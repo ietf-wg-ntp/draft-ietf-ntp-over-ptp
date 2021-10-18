@@ -118,10 +118,10 @@
     </section>
 
     <section title="PTP transport for NTP">
-      <t>A new TLV is defined for PTP to contain NTP messages in the client and
-        server mode. Using other NTP modes in the TLV is not specified. Any
-        transport specified for PTP that supports unicast messaging can be used
-        for NTP over PTP, e.g. UDP on IPv4 and IPv6.</t>
+      <t>A new TLV is defined for PTP to contain NTP messages in the client,
+        server, and symmetric modes. Using other NTP modes in the TLV is not
+        specified. Any transport specified for PTP that supports unicast
+        messaging can be used for NTP over PTP, e.g. UDP on IPv4 and IPv6.</t>
 
       <t>The type value of the NTP TLV is TBD. The TLV contains the whole NTP
         message as would normally be the UDP payload, without any
