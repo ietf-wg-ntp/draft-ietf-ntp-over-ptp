@@ -182,6 +182,46 @@
     </section>
     -->
 
+    <section title="Implementation Status - RFC EDITOR: REMOVE BEFORE PUBLICATION">
+      <t>This section records the status of known implementations of the
+        protocol defined by this specification at the time of posting of this
+        Internet-Draft, and is based on a proposal described in RFC 7942. The
+        description of implementations in this section is intended to assist
+        the IETF in its decision processes in progressing drafts to RFCs.
+        Please note that the listing of any individual implementation here does
+        not imply endorsement by the IETF. Furthermore, no effort has been
+        spent to verify the information presented here that was supplied by
+        IETF contributors. This is not intended as, and must not be construed
+        to be, a catalog of available implementations or their features.
+        Readers are advised to note that other implementations may exist.</t>
+
+      <t>According to RFC 7942, "this will allow reviewers and working groups
+        to assign due consideration to documents that have the benefit of
+        running code, which may serve as evidence of valuable experimentation
+        and feedback that have made the implemented protocols more mature. It
+        is up to the individual working groups to use this information as they
+        see fit".</t>
+
+      <section title="chrony">
+        <t>chrony (https://chrony.tuxfamily.org) has experimental support for
+          PTP-over-NTP in its development branch. As the type of the NTP TLV,
+          it uses 0x2023 from the experimental "do not propagate" range.</t>
+
+        <t>It was tested on Linux with the following network controllers, which
+          have hardware timestamping limited to PTP packets:</t>
+
+        <t><list>
+          <t>Intel XL710 (i40e driver) - works</t>
+          <t>Intel X540-AT2 (ixgbe driver) - works</t>
+          <t>Intel 82576 (igb driver) - works</t>
+          <t>Broadcom BCM5720 (tg3 driver) - works</t>
+          <t>Broadcom BCM57810 (bnx2x driver) - does not timestamp unicast PTP
+            packets</t>
+        </list></t>
+
+      </section>
+    </section>
+
     <section anchor="Security" title="Security Considerations">
       <t>The PTP transport prevents NTP clients from randomizing their source
         port. It has no other impact on security of NTP.</t>
