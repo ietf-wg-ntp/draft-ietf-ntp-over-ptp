@@ -13,7 +13,7 @@
 <?rfc compact="yes"?>
 <?rfc subcompact="no"?>
 
-<rfc category="std" docName="draft-mlichvar-ntp-over-ptp-02" ipr="trust200902">
+<rfc category="std" docName="draft-mlichvar-ntp-over-ptp-03" ipr="trust200902">
   <front>
     <title>NTP Over PTP</title>
 
@@ -31,7 +31,7 @@
       </address>
     </author>
 
-    <date year="2022" month="May" day="30"/>
+    <date year="2023" month="Mar" day="7"/>
 
     <area>General</area>
 
