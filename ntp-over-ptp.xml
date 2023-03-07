@@ -142,6 +142,8 @@
             TLV</t>
           <t>domainNumber is 123</t>
           <t>flagField has the unicastFlag (0x4) bit set</t>
+          <t>sequenceId is increased by one with each transmitted PTP
+            message</t>
         </list>
       </t>
 
