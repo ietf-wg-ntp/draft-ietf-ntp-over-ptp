@@ -171,10 +171,11 @@
         calculated only over the NTP message following the header of the NTP
         TLV.</t>
 
-      <t>Timestamps SHOULD NOT be adjusted for the beginning of the NTP data in
-        the PTP message. They SHOULD still correspond to the ending of the
-        transmission and beginning of the reception (e.g. start of delimiter in
-        the Ethernet frame).</t>
+      <t>Receive and transmit timestamps contained in the NTP messages SHOULD
+        NOT be adjusted for the beginning of the NTP data in the PTP message.
+        They SHOULD still correspond to the ending of the reception and
+        beginning of the transmission of the whole frame (e.g. start frame
+        delimiter in an Ethernet frame).</t>
 
       <t>Any modifications of the correctionField made by potential one-step
         end-to-end transparent clocks in the network SHOULD be ignored by the
