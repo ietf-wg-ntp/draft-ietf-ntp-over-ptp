@@ -66,24 +66,27 @@
         to the PTP unicast mode.</t>
 
       <t>An issue for NTP is hardware that can specifically timestamp only PTP
-        packets. This limitation comes from their design, which does not allow
-        the timestamps to be captured or retrieved at the same rate as packets
-        can be received or transmitted. A filter needs to be implemented in the
-        hardware to inspect each packet and timestamp only those that actually
-        need it. The filter can be usually configured for the PTP transport
-        (e.g. UDPv4, UDPv6, 802.3) and sometimes even the message type (e.g.
-        sync message or delay request) to further reduce the rate of timestamps
-        on the server or client side. This limitation prevents hardware
-        timestamping of NTP messages. It also prevents timestamping of PTP
-        messages if they are secured at the transport layer or below (e.g.
-        IPSec or MACSec).</t>
+        packets. This limitation comes from a hardware design which can provide
+        receive timestamps only at a limited rate and not the maximum rate
+        supported by the network interface. To avoid missing receive timestamps
+        when the interface is receiving other traffic at a high rate, a filter
+        needs to be implemented in the hardware to inspect each received packet
+        and capture a timestamp only for packets that need it.</t>
+
+      <t>The hardware filter can be usually configured for specific PTP
+        transport (e.g. UDPv4, UDPv6, 802.3) and sometimes even the PTP message
+        type (e.g. sync message or delay request) to further reduce the rate of
+        timestamps on the server or client side, but it cannot be configured to
+        timestamp NTP messages on the UDP port 123.</t>
 
       <t>This document specifies a new transport for NTP to enable the
         PTP-specific timestamping support. It adds a new extension field (TLV)
         for PTP to contain NTP messages.</t>
 
-      <t>NTP over PTP does not disrupt normal operation of PTP. A network and
-        even a single host can support both at the same time.</t>
+      <t>NTP over PTP does not require any PTP clocks to be present in the
+        network. It does not disrupt their operation if they are present. Hosts
+        in the network can operate as PTP clocks and NTP servers, clients, or
+        peers using NTP over PTP at the same time.</t>
 
       <t>The specification does not take advantage of the PTP correctionField
         modified by PTP transparent clocks as their support for the unicast
@@ -98,14 +101,15 @@
             Security</xref>, not losing any of its features. The PTP unicast
             mode allows an almost-infinite traffic amplification, which can
             be exploited for denial-of-service attacks and can only be limited
-            by security mechanisms using client authentication.</t>
+            by security mechanisms requiring client authentication.</t>
           <t>It needs fewer messages and less network bandwith to get the same
             number of timestamps.</t>
-          <t>It is better suited for synchronization in networks without full
-            on-path support. It does not assume the network delay is constant
-            and the number of measurements in opposite directions is symmetric
-            (in PTP sync messages and delay requests have independent
-            timing).</t>
+          <t>It is better suited for synchronization in networks which do not
+            have full on-path support for PTP (as boundary clocks or
+            transparent clocks). NTP does not assume the network delay is
+            constant and the rate of measurements in opposite directions is
+            symmetric. PTP measures the offset and delay separately (sync
+            messages and delay requests have independent timing).</t>
         </list>
       </t>
 
@@ -131,7 +135,7 @@
         port numbers MUST be the PTP event port (319). Client port randomization
         would break the timestamping.</t>
 
-      <t>The NTP TLV MUST be included in a delay request message. The
+      <t>The NTP TLV MUST be included in a PTP delay request message. The
         originTimestamp field and all fields of the header SHOULD be zero,
         except:
 
@@ -147,18 +151,18 @@
         </list>
       </t>
 
-      <t>An NTP client using the PTP transport sends NTP requests in PTP
-        messages to the server at the same rate as it would normally send them
-        over UDP.</t>
+      <t>An NTP client or peer using the PTP transport sends NTP requests
+        contained in PTP delay requests as the NTP TLV.</t>
 
-      <t>A server which supports the NTP TLV MUST check for the domainNumber
-        of 123 and respond to an NTP request with a single PTP message
-        containing the NTP response using the same PTP message format. It MUST
-        NOT send a delay response message.</t>
+      <t>An NTP server or peer receiving NTP requests over the PTP transport
+        MUST check for the domainNumber of 123 and the NTP TLV. Its responses
+        to these requests MUST be contained in PTP delay requests as the NTP
+        TLV. It MUST NOT respond with PTP delay responses, or any other PTP
+        messages.</t>
 
-      <t>A server which does not support the NTP TLV will not recognize the
-        domain number and ignore the message. If it responded to messages in
-        the domain (e.g. due to misconfiguration), it would send a delay
+      <t>If a PTP clock receives an NTP-over-PTP request, it will not recognize
+        the domain number and ignore the message. If it responded to messages
+        in the domain (e.g. due to misconfiguration), it would send a delay
         response (to port 320 if using the UDP transport), which would be
         ignored by the client.</t>
 
@@ -176,10 +180,12 @@
         server and client.</t>
     </section>
 
-    <!--
     <section anchor="Acknowledgements" title="Acknowledgements">
+      <t>The author would like to thank Martin Langer for his useful
+        comments.</t>
     </section>
 
+    <!--
     <section anchor="IANA" title="IANA Considerations">
     </section>
     -->
