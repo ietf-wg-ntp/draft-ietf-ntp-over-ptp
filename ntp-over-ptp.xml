@@ -3,6 +3,7 @@
 <!ENTITY RFC2119 SYSTEM "https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.2119.xml">
 <!ENTITY RFC5905 SYSTEM "https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.5905.xml">
 <!ENTITY RFC8915 SYSTEM "https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.8915.xml">
+<!ENTITY RFC9109 SYSTEM "https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.9109.xml">
 ]>
 <?xml-stylesheet type='text/xsl' href='rfc2629.xslt' ?>
 <?rfc strict="yes"?>
@@ -133,8 +134,10 @@
         modifications. The TLV does not propagate through boundary clocks.</t>
 
       <t>If the UDP transport is used for PTP, the UDP source and destination
-        port numbers MUST be the PTP event port (319). Client port randomization
-        would break the timestamping.</t>
+        port numbers MUST be the PTP event port (319). If the client
+        implemented <xref target="RFC9109">port randomization</xref>, requests
+        and/or responses would not get a hardware receive timestamp due to the
+        filter matching only the PTP port.</t>
 
       <t>The NTP TLV MUST be included in a PTP delay request message. The
         originTimestamp field and all fields of the header SHOULD be zero,
@@ -263,6 +266,8 @@
 
     <references title="Informative References">
       &RFC8915;
+
+      &RFC9109;
     </references>
   </back>
 </rfc>
