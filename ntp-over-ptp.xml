@@ -190,10 +190,9 @@
         comments.</t>
     </section>
 
-    <!--
     <section anchor="IANA" title="IANA Considerations">
+      <t>This memo includes no request to IANA.</t>
     </section>
-    -->
 
     <section title="Implementation Status - RFC EDITOR: REMOVE BEFORE PUBLICATION">
       <t>This section records the status of known implementations of the
