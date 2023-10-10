@@ -229,6 +229,7 @@
           <t>Broadcom BCM5720 (tg3 driver) - works</t>
           <t>Broadcom BCM57810 (bnx2x driver) - does not timestamp unicast PTP
             packets</t>
+          <t>Solarflare SFC9250 (sfc driver) - works</t>
         </list></t>
 
       </section>
