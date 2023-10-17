@@ -215,23 +215,23 @@
         see fit".</t>
 
       <section title="chrony">
-        <t>chrony (https://chrony.tuxfamily.org) has experimental support for
-          PTP-over-NTP in its development branch. As the type of the NTP TLV,
-          it uses 0x2023 from the experimental "do not propagate" range.</t>
+        <t>chrony (https://chrony-project.org) added experimental support for
+          NTP over PTP in version 4.2. As the type of the NTP TLV, it uses
+          0x2023 from the experimental "do not propagate" range.</t>
 
         <t>It was tested on Linux with the following network controllers, which
-          have hardware timestamping limited to PTP packets:</t>
+          have hardware timestamping limited to PTP packets:
 
-        <t><list>
-          <t>Intel XL710 (i40e driver) - works</t>
-          <t>Intel X540-AT2 (ixgbe driver) - works</t>
-          <t>Intel 82576 (igb driver) - works</t>
-          <t>Broadcom BCM5720 (tg3 driver) - works</t>
-          <t>Broadcom BCM57810 (bnx2x driver) - does not timestamp unicast PTP
-            packets</t>
-          <t>Solarflare SFC9250 (sfc driver) - works</t>
-        </list></t>
-
+          <list>
+            <t>Intel XL710 (i40e driver) - works</t>
+            <t>Intel X540-AT2 (ixgbe driver) - works</t>
+            <t>Intel 82576 (igb driver) - works</t>
+            <t>Broadcom BCM5720 (tg3 driver) - works</t>
+            <t>Broadcom BCM57810 (bnx2x driver) - does not timestamp unicast PTP
+              packets</t>
+            <t>Solarflare SFC9250 (sfc driver) - works</t>
+          </list>
+        </t>
       </section>
     </section>
 
