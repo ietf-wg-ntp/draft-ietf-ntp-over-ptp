@@ -2,6 +2,7 @@
 <!DOCTYPE rfc SYSTEM "rfc2629.dtd" [
 <!ENTITY RFC2119 SYSTEM "https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.2119.xml">
 <!ENTITY RFC5905 SYSTEM "https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.5905.xml">
+<!ENTITY RFC7822 SYSTEM "https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.7822.xml">
 <!ENTITY RFC8915 SYSTEM "https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.8915.xml">
 <!ENTITY RFC9109 SYSTEM "https://xml2rfc.ietf.org/public/rfc/bibxml/reference.RFC.9109.xml">
 ]>
@@ -85,18 +86,30 @@
         messaging, but it typically cannot be configured to timestamp NTP
         messages sent to the UDP port 123.</t>
 
-      <t>This document specifies a new transport for NTP to enable the
-        PTP-specific timestamping support. It adds a new extension field (TLV)
-        for PTP to contain NTP messages.</t>
+      <t>Another issue for NTP is missing hardware support in network switches
+        and routers. With PTP the devices operate either as boundary clocks or
+        transparent clocks. Boundary clocks are analogous to NTP clients that
+        work also as servers for other clients. Transparent clocks are much
+        simpler. They only measure the delay in forwarding of PTP packets
+        and write this delay to the correction field of either the packet
+        itself (one-step mode) or a later packet in the PTP exchange (two-step
+        mode). Transparent clocks are specific to the PTP delay mechanism used
+        in the network, either end-to-end (E2E) or peer-to-peer (P2P).</t>
+
+      <t>This document specifies a new transport for NTP to enable hardware
+        timestamping on NICs which can timestamp only PTP messages and also
+        take advantage of one-step E2E PTP unicast transparent clocks. It adds
+        a new extension field (TLV) for PTP to contain NTP messages and adds a
+        new extension field for NTP to provide clients and peers with the
+        correction of their NTP requests from transparent clocks. The NTP
+        broadcast mode is not supported.</t>
 
       <t>NTP over PTP does not require any PTP clocks to be present in the
-        network. It does not disrupt their operation if they are present. Hosts
-        in the network can operate as PTP clocks and NTP servers, clients, or
-        peers using NTP over PTP at the same time.</t>
-
-      <t>The specification does not take advantage of the PTP correctionField
-        modified by PTP transparent clocks as their support for the unicast
-        mode seems to be rare or nonexistent.</t>
+        network. It does not disrupt their operation if they are present. If
+        the network uses one-step E2E transparent clocks, NTP clients and peers
+        can reach the same or better accuracy as PTP clocks. Hosts in the
+        network can operate as PTP clocks and NTP servers, clients, or peers
+        using NTP over PTP at the same time.</t>
 
       <t>The client-server mode of NTP, even if using the PTP transport, has
         several advantages to PTP using multicast or unicast messaging:
@@ -199,10 +212,143 @@
         They SHOULD still correspond to the ending of the reception and
         beginning of the transmission of the whole frame (e.g. start frame
         delimiter in an Ethernet frame).</t>
+    </section>
 
-      <t>Any modifications of the correctionField made by potential one-step
-        end-to-end transparent clocks in the network SHOULD be ignored by the
-        server and client.</t>
+    <section title="Network Correction Extension Field">
+      <t>One-step E2E PTP transparent clocks modify the correction field in the
+        header of the PTP delay requests containing NTP messages. To be able to
+        verify and apply the corrections to an NTP measurement, the client or
+        peer needs to know the correction of both the request and response.
+        The correction of the response is in the PTP header of the message
+        itself. The correction of the request is provided by the server or
+        other peer in a new NTP extension field included in the response.</t>
+
+      <t>The format of the Network Correction Extension Field is shown in
+        Figure <xref format="counter" target="net-correction-ext-field"/>.
+      </t>
+
+      <figure align="center" anchor="net-correction-ext-field"
+          title="Format of Network Correction Extension Field">
+        <artwork><![CDATA[
+ 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+| Type = [[TBD]]                |             Length            |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                                                               |
++                  Network Correction (64 bits)                 +
+|                                                               |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+.                                                               .
+.                            Padding                            .
+.                                                               .
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+        ]]></artwork>
+      </figure>
+
+      <t>The length of padding is the minimum required to make a valid
+        extension field in the protocol version. For NTPv4 that is 16 octets if
+        it is the last extension field in the message per <xref
+        target="RFC7822">RFC 7822</xref>.</t>
+
+      <t>The Network Correction field in the extension field uses the 64-bit
+        NTP timestamp format (resolution of about 1/4th of a nanosecond). The
+        correction field in PTP header has a different format (64-bit
+        nanoseconds + 16-bit fraction).</t>
+
+      <t>The value of the NTP network correction is the sum of PTP
+        corrections provided by transparent clocks and the time it takes to
+        receive the packet (i.e. packet length including the frame check
+        sequence divided by the link speed).</t>
+
+      <t>The reason for not using the PTP correction alone is to avoid an
+        asymmetric correction when the server and client, or peers, are
+        connected to the network with different link speeds. The receive
+        duration included in the NTP correction cancels out the transposition
+        of PTP receive timestamp corresponding to the beginning of the
+        reception to NTP receive timestamp corresponding to the end of the
+        reception.</t>
+
+      <t>The Figure <xref format="counter" target="ptp-vs-ntp-correction"/>
+        shows the NTP timestamps, transmit/receive durations, and processing
+        and queuing delays included in PTP corrections for an NTP exchange made
+        over two PTP transparent clocks. The link speed is increasing on the
+        network path from the client to the server. The propagation delays in
+        cables are not shown.</t>
+
+      <figure align="center" anchor="ptp-vs-ntp-correction"
+          title="PTP vs NTP Correction">
+        <artwork><![CDATA[
+NTP server                          T2  T3
+             --------------------|==|----|==|--------------------
+PTP TC #2                      |~|          |~|
+                          |====|              |====|
+PTP TC #1               |~|                        |~|
+             --|========|----------------------------|========|--
+NTP client    T1                                              T4
+
+PTP correction |========|~|====|~|       |==|~|====|~|
+NTP correction |========|~|====|~|==|    |==|~|====|~|========|
+        ]]></artwork>
+      </figure>
+
+      <t>When an NTP server which supports the PTP transport receives an NTP
+        request containing the Network Correction Extension Field, it SHOULD
+        respond with the extension field providing the network correction of
+        the client's request. The server MUST ignore the value of the network
+        correction in the request.</t>
+
+      <t>An NTP client or peer which supports the PTP transport and is
+        configured to use the network correction for the association SHOULD
+        include the extension field in its NTP requests. In the case of a
+        client, the correction value in the extension field SHOULD be always
+        zero.</t>
+
+      <t>When the client or peer has the network correction of both the request
+        and response, it can correct the measured NTP peer delay and offset:
+
+        <list style="symbols">
+          <t>delta_c = delta - (nc_rs + nc_rq - dur_rs - dur_rq) * (1 - freq_tc)</t>
+          <t>theta_c = theta + (nc_rs - nc_rq) / 2</t>
+        </list>
+
+        where
+
+        <list style="symbols">
+          <t>delta is the NTP peer delay from RFC 5905</t>
+          <t>theta is the NTP offset from RFC 5905</t>
+          <t>nc_rq is the network correction of the request</t>
+          <t>nc_rs is the network correction of the response</t>
+          <t>dur_rq is the transmit duration of the request</t>
+          <t>dur_rs is the receive duration of the response</t>
+          <t>freq_tc is the maximum assumed frequency error of transparent
+            clocks</t>
+        </list>
+      </t>
+
+      <t>The corrected delay (delta_c) and offset (theta_c) MUST NOT be
+        accepted for synchronization if any of delta_c, nc_rs, and nc_rq is
+        negative. This requirement limits the error caused by faulty
+        transparent clocks and man-in-the-middle attacks.</t>
+
+      <t>Root delay (DELTA) MUST NOT be corrected to not make the maximum
+        assumed error (root distance) dependent on accurate network
+        corrections.</t>
+
+      <t>The scaling by the freq_tc constant (e.g. 100 ppm) is needed to
+        make room for errors in corrections made by transparent clocks running
+        faster than true time and avoid samples with larger corrections from
+        getting a shorter delay than samples with smaller corrections, which
+        would negatively impact their filtering and weighting.</t>
+
+      <t>The dur_rq and dur_rs values make the corrected peer delay correspond
+        to a direct connection to the server.  If they were not used, a
+        perfectly corrected delay on a short network path would be too close to
+        zero and frequently negative due to frequency offset between the client
+        and server. Note that NTP peers and PTP clocks using the E2E delay
+        mechanism are more sensitive to frequency offsets due to longer
+        measurement intervals. If dur_rq is unknown, it MAY be assumed to be
+        equal to dur_rs.</t>
     </section>
 
     <section anchor="Acknowledgements" title="Acknowledgements">
@@ -211,7 +357,18 @@
     </section>
 
     <section anchor="IANA" title="IANA Considerations">
-      <t>This memo includes no request to IANA.</t>
+      <t>IANA is requested to allocate the following field in the <xref
+        target="RFC5905">NTP Extension Field Types Registry</xref>:</t>
+
+      <texttable>
+        <ttcol>Field Type</ttcol>
+        <ttcol>Meaning</ttcol>
+        <ttcol>Reference</ttcol>
+
+        <c>[[TBD]]</c>
+        <c>Network correction</c>
+        <c>[[this memo]]</c>
+      </texttable>
     </section>
 
     <section title="Implementation Status - RFC EDITOR: REMOVE BEFORE PUBLICATION">
@@ -252,12 +409,28 @@
             <t>Solarflare SFC9250 (sfc driver) - works</t>
           </list>
         </t>
+
+        <t>The network correction was tested with the following switches which
+          support operation as a one-step E2E PTP unicast transparent
+          clock:
+
+          <list>
+            <t>FS.COM IES3110-8TF-R - works</t>
+            <t>Juniper QFX5200-32C-32Q - works</t>
+          </list>
+        </t>
       </section>
     </section>
 
     <section anchor="Security" title="Security Considerations">
       <t>The PTP transport prevents NTP clients from randomizing their source
-        port. It has no other impact on security of NTP.</t>
+        port.</t>
+
+      <t>The corrections provided by PTP transparent clocks cannot be
+        authenticated. Man-in-the-middle attackers can modify the correction
+        field, but only corrections smaller than the measured delay are
+        accepted by clients. The impact is comparable to the impact of delaying
+        unmodified NTP messages.</t>
     </section>
   </middle>
 
@@ -266,6 +439,8 @@
       &RFC2119;
 
       &RFC5905;
+
+      &RFC7822;
 
       <reference anchor="IEEE1588" target="https://www.ieee.org">
         <front>
