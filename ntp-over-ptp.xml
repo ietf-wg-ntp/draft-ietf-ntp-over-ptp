@@ -80,11 +80,11 @@
         capture a timestamp only for packets that need it.</t>
 
       <t>The hardware filter can be usually configured for specific PTP
-        transport (e.g. UDPv4, UDPv6, 802.3) and sometimes even the PTP message
-        type (e.g. sync message or delay request) to further reduce the
-        timestamping rate on the server or client side in the case of multicast
-        messaging, but it typically cannot be configured to timestamp NTP
-        messages sent to the UDP port 123.</t>
+        transport (e.g. UDP over IPv4, UDP over IPv6, 802.3) and sometimes even
+        the PTP message type (e.g. sync message or delay request) to further
+        reduce the timestamping rate on the server or client side in the case
+        of multicast messaging, but it typically cannot be configured to
+        timestamp NTP messages sent to the UDP port 123.</t>
 
       <t>Another issue for NTP is missing hardware support in network switches
         and routers. With PTP the devices operate either as boundary clocks or
@@ -99,8 +99,8 @@
       <t>This document specifies a new transport for NTP to enable hardware
         timestamping on NICs which can timestamp only PTP messages and also
         take advantage of one-step E2E PTP unicast transparent clocks. It adds
-        a new extension field (TLV) for PTP to contain NTP messages and adds a
-        new extension field for NTP to provide clients and peers with the
+        a new type-length-value (TLV) for PTP to contain NTP messages and adds
+        a new extension field for NTP to provide clients and peers with the
         correction of their NTP requests from transparent clocks. The NTP
         broadcast mode is not supported.</t>
 
@@ -111,41 +111,46 @@
         network can operate as PTP clocks and NTP servers, clients, or peers
         using NTP over PTP at the same time.</t>
 
-      <t>The client-server mode of NTP, even if using the PTP transport, has
-        several advantages to PTP using multicast or unicast messaging:
+      <section title="Comparison with PTP">
+        <t>The client-server mode of NTP, even with the PTP transport, has
+          multiple advantages over PTP using multicast or unicast messaging:
 
-        <list style="symbols">
-          <t>NTP is more secure. It can use existing security mechanisms
-            specified for NTP like <xref target="RFC8915">Network Time
-            Security</xref>, not losing any of its features. Like the NTP
-            broadcast mode, PTP is more difficult to secure against delay
-            attacks. The PTP unicast mode allows an almost-infinite traffic
-            amplification, which can be exploited for denial-of-service attacks
-            and can only be limited by security mechanisms requiring client
-            authentication.</t>
-          <t>NTP is more resilient to failures. Each client can use multiple
-            servers and detect failed sources in its source selection. In PTP
-            a single hardware or software failure can disrupt the whole PTP
-            domain. Multiple independent domains have to be used to handle any
-            failure.</t>
-          <t>NTP is better suited for synchronization in networks which do not
-            have full on-path PTP support, or where timestamping errors do
-            not have a symmetric distribution (e.g. due to sensitivity to
-            network load). NTP does not assume network delay is constant
-            and the rate of measurements in opposite directions is symmetric.
-            It can filter the measurements more effectively and is not
-            sensitive to asymmetrically distributed network delays and
-            timestamping errors. PTP has to measure the offset and delay
-            separately to enable multicast messaging, which is needed to reduce
-            the transmit timestamping rate. With PTP unicast messaging and NTP
-            client-server mode a limited transmit timestamping rate on server
-            limits the number of clients.</t>
-          <t>NTP needs fewer messages to get the same number of timestamps. It
-            uses less network bandwidth than PTP using unicast messaging.</t>
-          <t>NTP provides clients with an estimate of the maximum error of the
-            clock (root distance).</t>
-        </list>
-      </t>
+          <list style="symbols">
+            <t>NTP is more secure. Existing security mechanisms specified for
+              NTP like <xref target="RFC8915">Network Time Security</xref> are
+              not impacted by the PTP transport. It is more difficult to secure
+              PTP against delay attacks due to the sync message not being an
+              immediate response to a client request. The PTP unicast mode
+              allows an almost-infinite traffic amplification, which can be
+              exploited for denial-of-service attacks and can only be limited
+              by security mechanisms requiring client authentication.</t>
+            <t>NTP is more resilient to failures. Each client can use multiple
+              servers and detect failed sources in its source selection. In PTP
+              a single hardware or software failure can disrupt the whole PTP
+              domain. Multiple independent domains have to be used to handle any
+              failure.</t>
+            <t>NTP is better suited for synchronization in networks which do not
+              have full on-path PTP support, or where timestamping errors do
+              not have a symmetric distribution (e.g. due to sensitivity to
+              network load). NTP does not assume network delay is constant
+              and the rate of measurements in opposite directions is symmetric.
+              It can filter the measurements more effectively and is not
+              sensitive to asymmetrically distributed network delays and
+              timestamping errors. PTP has to measure the offset and delay
+              separately to enable multicast messaging, which is needed to reduce
+              the transmit timestamping rate.</t>
+            <t>NTP needs fewer messages to get the same number of timestamps. It
+              uses less network bandwidth than PTP using unicast messaging.</t>
+            <t>NTP provides clients with an estimate of the maximum error of the
+              clock (root distance).</t>
+          </list>
+        </t>
+
+        <t>The disadvantage of NTP is transmit timestamping rate growing with
+          the number of clients. A server which is limited by the hardware
+          timestamping rate cannot provide a highly accurate time service to
+          the same number of clients as with PTP using multicast messaging.</t>
+      </section>
 
       <section title="Requirements Language">
         <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
@@ -159,7 +164,7 @@
       <t>A new TLV is defined for PTP to contain NTP messages in the client
         (3), server (4), and symmetric modes (1 and 2). Using other NTP modes in
         the TLV is not specified. Any transport specified for PTP that supports
-        unicast messaging can be used for NTP over PTP, e.g. UDP on IPv4 and
+        unicast messaging can be used for NTP over PTP, e.g. UDP over IPv4 and
         IPv6.</t>
 
       <t>The type value of the NTP TLV is TBD. The TLV contains the whole NTP
@@ -173,12 +178,13 @@
         filter matching only the PTP port.</t>
 
       <t>The NTP TLV MUST be included in a PTP delay request message. The
-        originTimestamp field and all fields of the header SHOULD be zero,
+        originTimestamp field and all fields of the PTP header SHOULD be zero,
         except:
 
         <list style="symbols">
           <t>messageType is 1 (delay request)</t>
-          <t>versionPTP is 2</t>
+          <t>versionPTP is 2 (minorVersionPTP is 0 for better
+            compatibility)</t>
           <t>messageLength is the length of the PTP message including the NTP
             TLV</t>
           <t>domainNumber is 123</t>
@@ -205,7 +211,11 @@
 
       <t>Any authenticator fields included in the NTP messages MUST be
         calculated only over the NTP message following the header of the NTP
-        TLV.</t>
+        TLV. Other data in the PTP message (outside of the NTP TLV) are not
+        protected. With the exception of the PTP correction field requiring
+        special handling as described in the following section, the other PTP
+        fields are used only for the transport of the NTP message and have no
+        impact on security of NTP, similarly to the IP and UDP headers.</t>
 
       <t>Receive and transmit timestamps contained in the NTP messages SHOULD
         NOT be adjusted for the beginning of the NTP data in the PTP message.
@@ -246,10 +256,10 @@
         ]]></artwork>
       </figure>
 
-      <t>The length of padding is the minimum required to make a valid
-        extension field in the protocol version. For NTPv4 that is 16 octets if
-        it is the last extension field in the message per <xref
-        target="RFC7822">RFC 7822</xref>.</t>
+      <t>The length of the padding is the minimum required to make a valid
+        extension field in the used version of NTP. In NTPv4 that is 16 octets
+        to get a 28-octet extension field following <xref target="RFC7822">RFC
+        7822</xref>.</t>
 
       <t>The Network Correction field in the extension field uses the 64-bit
         NTP timestamp format (resolution of about 1/4th of a nanosecond). The
