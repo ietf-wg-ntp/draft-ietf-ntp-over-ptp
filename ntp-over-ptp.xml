@@ -167,9 +167,17 @@
         unicast messaging can be used for NTP over PTP, e.g. UDP over IPv4 and
         IPv6.</t>
 
-      <t>The type value of the NTP TLV is TBD. The TLV contains the whole NTP
-        message as would normally be the UDP payload, without any
-        modifications. The TLV does not propagate through boundary clocks.</t>
+      <t>The NTP TLV is an organization-specific TLV having the following
+        fields:
+        <list style="symbols">
+          <t>type is 0x8000 (ORGANIZATION_EXTENSION_DO_NOT_PROPAGATE)</t>
+          <t>lengthField is 8 + length of the NTP message</t>
+          <t>organizationId is 00-00-5E (IANA OUI)</t>
+          <t>organizationSubType is [[TBD]]</t>
+          <t>dataField contains two zero octets for 32-bit alignment followed
+            by the NTP message, which would normally be the UDP payload</t>
+        </list>
+      </t>
 
       <t>If the UDP transport is used for PTP, the UDP source and destination
         port numbers MUST be the PTP event port (319). If the client
@@ -377,6 +385,32 @@ NTP correction |========|~|====|~|==|    |==|~|====|~|========|
 
         <c>[[TBD]]</c>
         <c>Network correction</c>
+        <c>[[this memo]]</c>
+      </texttable>
+
+      <t>IANA is requested to create a new registry "IANA PTP TLV Subtypes
+        Registry" for entries having the following fields:
+
+        <list>
+          <t>Subtype (REQUIRED) - integer in the range 0-0xFFFFFF</t>
+          <t>Description (REQUIRED)- short text description</t>
+          <t>Reference (REQUIRED) - reference to the document describing the
+            IANA PTP TLV</t>
+        </list>
+      </t>
+
+      <t>Subtypes in the range 0x800000-0xFFFFFF are reserved for experimental
+        and private use. They cannot be assigned by IANA.</t>
+
+      <t>The initial content of the registry is the following entry:</t>
+
+      <texttable>
+        <ttcol>Subtype</ttcol>
+        <ttcol>Description</ttcol>
+        <ttcol>Reference</ttcol>
+
+        <c>[[TBD]]</c>
+        <c>Network Time Protocol Message</c>
         <c>[[this memo]]</c>
       </texttable>
     </section>
