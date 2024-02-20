@@ -42,10 +42,11 @@
     <keyword>NTP</keyword>
 
     <abstract>
-      <t>This document specifies a transport for the Network Time Protocol
-        (NTP) client-server and symmetric modes using the Precision Time
-        Protocol (PTP) to enable hardware timestamping on network interface
-        controllers which can timestamp only PTP messages and enable
+      <t>This document specifies a transport for the client-server and
+        symmetric modes of the Network Time Protocol (NTP) which encapsulates
+        NTP messages in messages of the Precision Time Protocol (PTP). This
+        transport enables hardware timestamping in network interface
+        controllers which can timestamp only PTP messages and enables delay
         corrections in PTP transparent clocks.</t>
     </abstract>
   </front>
