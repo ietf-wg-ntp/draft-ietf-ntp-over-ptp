@@ -169,7 +169,7 @@
         IPv6.</t>
 
       <t>The NTP TLV is an organization-specific TLV having the following
-        fields:
+        fields (with octets in network order):
         <list style="symbols">
           <t>type is 0x8000 (ORGANIZATION_EXTENSION_DO_NOT_PROPAGATE)</t>
           <t>lengthField is 8 + length of the NTP message</t>
