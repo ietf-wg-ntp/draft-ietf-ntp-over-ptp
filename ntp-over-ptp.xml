@@ -371,8 +371,8 @@ NTP correction |========|~|====|~|==|    |==|~|====|~|========|
     </section>
 
     <section anchor="Acknowledgements" title="Acknowledgements">
-      <t>The author would like to thank Martin Langer for his useful
-        comments.</t>
+      <t>The author would like to thank Doug Arnold, Rodney Cummings, and
+        Martin Langer for their comments and suggestions.</t>
     </section>
 
     <section anchor="IANA" title="IANA Considerations">
