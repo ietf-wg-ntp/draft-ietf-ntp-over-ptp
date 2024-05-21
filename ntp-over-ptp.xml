@@ -161,8 +161,8 @@
       <t>A new TLV is defined for PTP to contain NTP messages in the client
         (3), server (4), and symmetric modes (1 and 2). Using other NTP modes in
         the TLV is not specified. Any transport specified for PTP that supports
-        unicast messaging can be used for NTP over PTP, e.g. UDP over IPv4 and
-        IPv6.</t>
+        unicast messaging, and an IPv4 or IPv6 mapping, can be used for NTP
+        over PTP.</t>
 
       <t>The NTP TLV is an organization-specific TLV having the following
         fields (with octets in network order):
