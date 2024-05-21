@@ -46,8 +46,8 @@
 
   <middle>
     <section title="Introduction">
-      <t>The <xref target="IEEE1588">Precision Time Protocol (PTP)</xref> was
-        designed for highly accurate synchronization of clocks in local
+      <t>The <xref target="IEEE1588-2019">Precision Time Protocol (PTP)</xref>
+        was designed for highly accurate synchronization of clocks in local
         networks. It relies on hardware timestamping supported in all network
         devices involved in the synchronization (e.g. network interface
         controllers, switches, and routers) to eliminate the impact of
@@ -98,12 +98,15 @@
         correction of their NTP requests from transparent clocks. The NTP
         broadcast mode is not supported.</t>
 
-      <t>NTP over PTP does not require any PTP clocks to be present in the
-        network. It does not disrupt their operation if they are present. If
-        the network uses one-step E2E transparent clocks, NTP clients and peers
-        can reach the same or better accuracy as PTP clocks. Hosts in the
-        network can operate as PTP clocks and NTP servers, clients, or peers
-        using NTP over PTP at the same time.</t>
+      <t>The use of PTP messages requires that protocol rules of <xref
+        target="IEEE1588-2019">IEEE1588</xref> are followed. NTP over PTP does
+        not require other PTP clocks to be present in the network. It does not
+        disrupt their operation if they are present. If the network uses
+        one-step E2E transparent clocks, NTP clients and peers using PTP for
+        transport can reach the same or better accuracy as PTP clocks using PTP
+        for synchronization. Hosts in a network can use PTP for synchronization
+        in one domain and transport of NTP messages in another domain at the
+        same time.</t>
 
       <section title="Comparison with PTP">
         <t>The client-server mode of NTP, even with the PTP transport, has
@@ -173,43 +176,43 @@
         </list>
       </t>
 
+      <t>The NTP TLV MUST be included in a unicast PTP event message. An event
+        message is required to enable the PTP-specific hardware timestamping
+        and corrections of transparent clocks. The PTP message MUST conform to
+        <xref target="IEEE1588-2008">PTP version 2</xref>, <xref
+        target="IEEE1588-2019">PTP version 2.1</xref>, or any future version of
+        the PTP specification.</t>
+
+      <t>An NTP client or peer using the PTP transport sends NTP requests
+        contained as the NTP TLV in PTP messages.</t>
+
+      <t>An NTP server or peer responding to an NTP request received over the
+        PTP transport MUST send its response as the NTP TLV using the same PTP
+        transport. The PTP message containing the NTP response MUST NOT be
+        longer than the PTP message containing the NTP request. If the NTP
+        response is expected to be used for synchronization (e.g. it is not an
+        error message), the PTP message SHOULD have the same length as the
+        message containing the request, using the PAD TLV (type 0x8008) if
+        needed, to avoid an asymmetric delay in networks without full on-path
+        PTP support.</t>
+
+      <t>The <xref target="IEEE1588-2019">PTP version 2.1</xref> specification
+        states that "A domain shall define the scope of PTP message
+        communication, state, operations, data sets, and timescale. Within a
+        PTP Network, a domain is identified by two attributes: domainNumber and
+        sdoId.". In the context of NTP over PTP version 2.1, this means that
+        the NTP servers, clients, and peers MUST verify that received PTP
+        messages use the domainNumber and sdoId configured for use by NTP over
+        PTP. The domainNumber SHOULD be 123, and sdoId SHOULD be 0. This
+        domainNumber 123 is not commonly used by PTP profiles, and so is less
+        likely to interfere with any other PTP operation which might be running
+        in the network.</t>
+
       <t>If the UDP transport is used for PTP, the UDP source and destination
-        port numbers MUST be the PTP event port (319). If the client
+        port numbers SHOULD be the PTP event port (319). If the client
         implemented <xref target="RFC9109">port randomization</xref>, requests
         and/or responses would not get a hardware receive timestamp due to the
         filter matching only the PTP port.</t>
-
-      <t>The NTP TLV MUST be included in a PTP delay request message. The
-        originTimestamp field and all fields of the PTP header SHOULD be zero,
-        except:
-
-        <list style="symbols">
-          <t>messageType is 1 (delay request)</t>
-          <t>versionPTP is 2 (minorVersionPTP is 0 for better
-            compatibility)</t>
-          <t>messageLength is the length of the PTP message including the NTP
-            TLV</t>
-          <t>domainNumber is 123</t>
-          <t>flagField has the unicastFlag (0x4) bit set</t>
-          <t>sequenceId is increased by one with each transmitted PTP
-            message</t>
-        </list>
-      </t>
-
-      <t>An NTP client or peer using the PTP transport sends NTP requests
-        contained in PTP delay requests as the NTP TLV.</t>
-
-      <t>An NTP server or peer receiving NTP requests over the PTP transport
-        MUST check for the domainNumber of 123 and the NTP TLV. Its responses
-        to these requests MUST be contained in PTP delay requests as the NTP
-        TLV. It MUST NOT respond with PTP delay responses, or any other PTP
-        messages.</t>
-
-      <t>If a PTP clock receives an NTP-over-PTP request, it will not recognize
-        the domain number and ignore the message. If it responded to messages
-        in the domain (e.g. due to misconfiguration), it would send a delay
-        response (to port 320 if using the UDP transport), which would be
-        ignored by the client.</t>
 
       <t>Any authenticator fields included in the NTP messages MUST be
         calculated only over the NTP message following the header of the NTP
@@ -228,7 +231,7 @@
 
     <section title="Network Correction Extension Field">
       <t>One-step E2E PTP transparent clocks modify the correction field in the
-        header of the PTP delay requests containing NTP messages. To be able to
+        header of the PTP event messages containing NTP messages. To be able to
         verify and apply the corrections to an NTP measurement, the client or
         peer needs to know the correction of both the request and response.
         The correction of the response is in the PTP header of the message
@@ -480,7 +483,7 @@ NTP correction |========|~|====|~|==|    |==|~|====|~|========|
 
       &RFC7822;
 
-      <reference anchor="IEEE1588" target="https://www.ieee.org">
+      <reference anchor="IEEE1588-2019" target="https://www.ieee.org">
         <front>
           <title>
             IEEE std. 1588-2019, "IEEE Standard for a Precision Clock
@@ -501,6 +504,21 @@ NTP correction |========|~|====|~|==|    |==|~|====|~|========|
       &RFC8915;
 
       &RFC9109;
+      <reference anchor="IEEE1588-2008" target="https://www.ieee.org">
+        <front>
+          <title>
+            IEEE std. 1588-2008, "IEEE Standard for a Precision Clock
+            Synchronization Protocol for Networked Measurement and Control
+            Systems."
+          </title>
+          <author>
+            <organization>
+              Institute of Electrical and Electronics Engineers
+            </organization>
+          </author>
+          <date month="7" year="2008"/>
+        </front>
+      </reference>
     </references>
   </back>
 </rfc>
