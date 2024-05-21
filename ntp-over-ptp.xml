@@ -212,7 +212,7 @@
         port numbers SHOULD be the PTP event port (319). If the client
         implemented <xref target="RFC9109">port randomization</xref>, requests
         and/or responses would not get a hardware receive timestamp due to the
-        filter matching only the PTP port.</t>
+        hardware filter matching only the PTP event port.</t>
 
       <t>Any authenticator fields included in the NTP messages MUST be
         calculated only over the NTP message following the header of the NTP
