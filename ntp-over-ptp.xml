@@ -224,9 +224,13 @@
 
       <t>Receive and transmit timestamps contained in the NTP messages SHOULD
         NOT be adjusted for the beginning of the NTP data in the PTP message.
-        They SHOULD still correspond to the ending of the reception and
-        beginning of the transmission of the whole frame (e.g. start frame
-        delimiter in an Ethernet frame).</t>
+        To minimize the impact of different link speeds on accuracy in networks
+        without full on-path PTP support, the transmit timestamp SHOULD
+        correspond to the PTP message timestamp point (i.e. beginning of the
+        first symbol after the Ethernet start of frame delimiter) and the
+        receive timestamp SHOULD be transposed from the PTP message timestamp
+        point to the ending of the reception (e.g. ending of the last symbol of
+        the Ethernet frame check sequence).</t>
     </section>
 
     <section title="Network Correction Extension Field">
